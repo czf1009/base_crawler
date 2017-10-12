@@ -6,7 +6,7 @@ import random
 import aiohttp
 
 import config
-from user_agents import agents
+from base_crawler.Lib.user_agents import agents
 
 logging.basicConfig(level=logging.DEBUG)
 LOGGER = logging.getLogger('downloader')

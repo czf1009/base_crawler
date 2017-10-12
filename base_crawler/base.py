@@ -8,9 +8,9 @@ import time
 # from pymongo import MongoClient
 
 # import config
-from Lib.connect_db import connect_mysql
-from Lib.downloader import Downloader
-from Lib.url_queue import Queue
+from base_crawler.Lib.connect_db import connect_mysql
+from base_crawler.Lib.downloader import Downloader
+from base_crawler.Lib.url_queue import Queue
 
 # import objgraph
 
@@ -110,18 +110,18 @@ class BaseCrawler(object):
         self.logger.debug('spider')
 
         url_item = self.queue.get()
-        resp, text = await self.downloader.download(url_item)
+        resp, body = await self.downloader.download(url_item)
         if not resp:
             return
 
         # # Complete spider rule
-        self.parse(resp)
+        self.parse(resp, body)
         # # end spider
 
         self.done_count += 1
         self.logger.info('已经下载完成%s个页面, 已过滤重复链接%s', self.done_count, count_dump)
 
-    def parse(self, response):
+    def parse(self, response, body):
         raise NotImplementedError
 
 if __name__ == '__main__':
@@ -129,7 +129,7 @@ if __name__ == '__main__':
 
     start_time = time.time()
 
-    base_crawler = BaseCrawler(start_urls)
+    base_crawler = BaseCrawler()
     base_crawler.crawler()
 
     print('店铺ID页已爬取完成，等待店铺信息与商品信息爬取完成')

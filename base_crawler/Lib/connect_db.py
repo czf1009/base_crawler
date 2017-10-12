@@ -1,4 +1,4 @@
-import config
+from base_crawler import config
 import pymysql
 import aiomysql
 
