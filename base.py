@@ -20,33 +20,24 @@ class BaseCrawler(object):
     Base crawler
     """
 
-    def __init__(self, start_urls):
+    def __init__(self, **kwargs):
         self.queue = Queue()
         self.dupefilter = set()
         self.downloader = Downloader(self.queue)
 
-        self.conn, self.cur = connect_mysql()
 
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
 
-        self.post_data = {
-            # "page_index": 0,
-        }
-        self.headers = {
-            # 'referer': 'http://i.waimai.meituan.com/home?lat=22.544102&lng=113.947104',
-        }
-        self.cookies = {
-            # 'w_latlng': '22555969,113893232'
-        }
-
-        self.start_urls = start_urls
         self.dir_name = 'json_id'
         self.request_delay = 2.5
         self.done_count = 0
 
         self.loop = asyncio.get_event_loop()
         self.start_async_loop()
+        self.__dict__.update(kwargs)
+        if not hasattr(self, 'start_urls'):
+            self.start_urls = []
 
     def __enter__(self):
         print("__enter__ method")
@@ -54,8 +45,6 @@ class BaseCrawler(object):
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         print("__exit__ method")
-        self.cur.close()
-        self.conn.close()
 
         if exc_traceback is None:
             print("Exited without Exception")
@@ -84,9 +73,9 @@ class BaseCrawler(object):
         """
         url_item = {
             'url': '',
-            'headers': self.headers,
-            'cookies': self.cookies,
-            'post_data': self.post_data
+            'headers': dict(),
+            'cookies': dict(),
+            'post_data': dict()
         }
         for start_url in start_urls:
             url_item['url'] = start_url
@@ -126,12 +115,14 @@ class BaseCrawler(object):
             return
 
         # # Complete spider rule
-
+        self.parse(resp)
         # # end spider
 
         self.done_count += 1
         self.logger.info('已经下载完成%s个页面, 已过滤重复链接%s', self.done_count, count_dump)
 
+    def parse(self, response):
+        raise NotImplementedError
 
 if __name__ == '__main__':
     start_urls = []
