@@ -1,3 +1,9 @@
+
+#  @Author: Zephyr_chen
+#  @Date: 2017-10-13 16:05:34
+#  @Last Modified by: mikey.zhaopeng
+#  @Last Modified time: 2017-10-13 16:06:10
+
 # import asyncio
 import json
 import logging
@@ -9,7 +15,7 @@ from base_crawler import config
 from base_crawler.Lib.user_agents import agents
 
 logging.basicConfig(level=logging.DEBUG)
-LOGGER = logging.getLogger('downloader')
+logger = logging.getLogger('downloader')
 
 
 class Downloader(object):
@@ -26,39 +32,57 @@ class Downloader(object):
         self.session = aiohttp.ClientSession(conn_timeout=5)
 
     async def fetch_page(self, url_item):
+        """
+        fetch page headers and body
+        """
         cookie_str = ''
         for i, j in url_item['cookies'].items():
             cookie_str += '%s=%s;' % (i, j)
         url_item['headers']['cookie'] = cookie_str
         url_item['headers']['user-agent'] = random.choice(agents)
+
         if config.use_proxy:
-            async with self.session.post(url_item['url'], headers=url_item['headers'],
-                                         data=json.dumps(
-                                             url_item['post_data']),
-                                         proxy=config.proxies['http']) as response:
-                return response, await response.text(encoding='utf8')
+            proxy = config.proxies['http']
         else:
+            proxy = None
+
+        if url_item['method'] == 'get':
+            async with self.session.get(
+                    url_item['url'], headers=url_item['headers'],
+                    data=json.dumps(url_item['post_data']), proxy=proxy) as response:
+                await response.read()
+                return response
+        elif url_item['method'] == 'post':
             async with self.session.post(
-                    url_item['url'], headers=url_item['headers'], data=url_item['post_data'],) as response:
-                return response, await response.text()
+                    url_item['url'], headers=url_item['headers'],
+                    data=json.dumps(url_item['post_data']), proxy=proxy) as response:
+                await response.read()
+                return response
+        else:
+            raise'method:{} is invalid!'.format(url_item['method'])
 
     async def download(self, url_item):
-        r, text = await self.fetch_page(url_item)
-        text = text.encode('utf8')
-        LOGGER.info("正在爬取页面: %s\npost_data: %s\ncookies:%s\n状态码：%s"%
-                    (url_item['url'], url_item['post_data'], url_item['cookies'], r.status))
+        """
+        return response
+        """
+        resp = await self.fetch_page(url_item)
+        logger.info("\n正在爬取页面: %s\npost_data: %s\ncookies:%s\nheaders:%s\n状态码：%s",
+                    url_item['url'], url_item['post_data'], url_item['cookies'], url_item['headers'], resp.status)
 
-        if r.status != 200:
+        print(resp)
+        if resp.status != 200:
             self.retry(url_item)
-        else:
-            return r, text
+            return False
+
+        return resp
 
     def retry(self, url_item):
+        
         if 'retry_times' in url_item:
             if url_item['retry_times'] <= config.RETRY_TIMES:
                 url_item['retry_times'] += 1
             else:
-                LOGGER.debug('重试超过%d次,页面: %s\npost_data: %s\ncookies:%s', config.RETRY_TIMES, url_item['url'],
+                logger.debug('重试超过%d次,页面: %s\npost_data: %s\ncookies:%s', config.RETRY_TIMES, url_item['url'],
                              url_item['post_data'], url_item['cookies'])
                 return False
         else:

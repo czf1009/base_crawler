@@ -1,15 +1,16 @@
-import asyncio
 import copy
-import json
 import logging
 import threading
 import time
 
-# from pymongo import MongoClient
+import asyncio
 
 # import config
 from base_crawler.Lib.downloader import Downloader
 from base_crawler.Lib.url_queue import Queue
+
+# from pymongo import MongoClient
+
 
 # import objgraph
 
@@ -35,8 +36,8 @@ class BaseCrawler(object):
         self.loop = asyncio.get_event_loop()
         self.start_async_loop()
         self.__dict__.update(kwargs)
-        if not hasattr(self, 'start_urls'):
-            self.start_urls = []
+        if not hasattr(self, 'start_url_items'):
+            self.start_url_items = []
 
     @property
     def logger(self):
@@ -71,19 +72,20 @@ class BaseCrawler(object):
         download_thread.start()
 
     # **********************************download_page
-    def put_start_urls(self):
+    def put_start_url_item(self):
         """
         Put url_item into queue
         :return:
         """
-        url_item = {
-            'url': '',
-            'headers': dict(),
-            'cookies': dict(),
-            'post_data': dict()
-        }
-        for start_url in self.start_urls:
-            url_item['url'] = start_url
+        for start_url_item in self.start_url_items:
+            url_item = {
+                'url': '',
+                'headers': dict(),
+                'cookies': dict(),
+                'post_data': dict(),
+                'method': 'get'
+            }
+            url_item.update(start_url_item)
             self.queue.put(copy.deepcopy(url_item))
 
     def crawler(self):
@@ -92,7 +94,7 @@ class BaseCrawler(object):
         :return:
         """
         self.logger.debug('crawler')
-        self.put_start_urls()
+        self.put_start_url_item()
 
         asyncio.set_event_loop(self.loop)
 
@@ -115,34 +117,20 @@ class BaseCrawler(object):
         self.logger.debug('spider')
 
         url_item = self.queue.get()
-        print(url_item)
-        resp, body = await self.downloader.download(url_item)
+        resp = await self.downloader.download(url_item)
         print(resp)
-        print(body)
         if not resp:
             return
 
         # # Complete spider rule
-        self.parse(resp, body)
+        await self.parse(resp)
         # # end spider
 
         self.done_count += 1
-        self.logger.info('已经下载完成%s个页面, 已过滤重复链接%s', self.done_count, count_dump)
+        self.logger.info('已经下载完成%s个页面', self.done_count)
 
-    def parse(self, response, body):
+    def parse(self, response):
+        """
+        parse response
+        """
         raise NotImplementedError
-
-if __name__ == '__main__':
-    start_urls = []
-
-    start_time = time.time()
-
-    base_crawler = BaseCrawler()
-    base_crawler.crawler()
-
-    print('店铺ID页已爬取完成，等待店铺信息与商品信息爬取完成')
-    time.sleep(100)
-
-    print('程序耗时： %f分', ((time.time() - start_time) / 60))
-
-    # time.sleep(3600)
