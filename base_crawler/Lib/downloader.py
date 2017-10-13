@@ -5,7 +5,7 @@ import random
 
 import aiohttp
 
-import config
+from base_crawler import config
 from base_crawler.Lib.user_agents import agents
 
 logging.basicConfig(level=logging.DEBUG)

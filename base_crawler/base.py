@@ -8,7 +8,6 @@ import time
 # from pymongo import MongoClient
 
 # import config
-from base_crawler.Lib.connect_db import connect_mysql
 from base_crawler.Lib.downloader import Downloader
 from base_crawler.Lib.url_queue import Queue
 
@@ -26,8 +25,8 @@ class BaseCrawler(object):
         self.downloader = Downloader(self.queue)
 
 
-        logging.basicConfig(level=logging.DEBUG)
-        self.logger = logging.getLogger(__name__)
+        # logging.basicConfig(level=logging.DEBUG)
+        # self.logger = logging.getLogger(__name__)
 
         self.dir_name = 'json_id'
         self.request_delay = 2.5
@@ -38,6 +37,12 @@ class BaseCrawler(object):
         self.__dict__.update(kwargs)
         if not hasattr(self, 'start_urls'):
             self.start_urls = []
+
+    @property
+    def logger(self):
+        """base logger"""
+        logger = logging.getLogger(__name__)
+        return logging.LoggerAdapter(logger, {'spider': self})
 
     def __enter__(self):
         print("__enter__ method")
@@ -77,7 +82,7 @@ class BaseCrawler(object):
             'cookies': dict(),
             'post_data': dict()
         }
-        for start_url in start_urls:
+        for start_url in self.start_urls:
             url_item['url'] = start_url
             self.queue.put(copy.deepcopy(url_item))
 
@@ -110,7 +115,10 @@ class BaseCrawler(object):
         self.logger.debug('spider')
 
         url_item = self.queue.get()
+        print(url_item)
         resp, body = await self.downloader.download(url_item)
+        print(resp)
+        print(body)
         if not resp:
             return
 

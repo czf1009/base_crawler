@@ -1,4 +1,4 @@
-from base_crawler.Lib import queue
+import queue
 
 
 class Queue(object):
