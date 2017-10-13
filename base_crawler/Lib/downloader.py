@@ -69,7 +69,6 @@ class Downloader(object):
         logger.info("\n正在爬取页面: %s\npost_data: %s\ncookies:%s\nheaders:%s\n状态码：%s",
                     url_item['url'], url_item['post_data'], url_item['cookies'], url_item['headers'], resp.status)
 
-        print(resp)
         if resp.status != 200:
             self.retry(url_item)
             return False

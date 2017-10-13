@@ -118,7 +118,6 @@ class BaseCrawler(object):
 
         url_item = self.queue.get()
         resp = await self.downloader.download(url_item)
-        print(resp)
         if not resp:
             return
 
