@@ -3,6 +3,7 @@ import aiohttp
 RETRY_HTTP_CODES = []
 
 RETRY_TIMES = 20
+REQUEST_DELAY = 0.2
 
 # mysql
 # docker数据库

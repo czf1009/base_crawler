@@ -5,7 +5,7 @@ import time
 
 import asyncio
 
-# import config
+from base_crawler import config
 from base_crawler.Lib.downloader import Downloader
 from base_crawler.Lib.url_queue import Queue
 
@@ -30,7 +30,6 @@ class BaseCrawler(object):
         # self.logger = logging.getLogger(__name__)
 
         self.dir_name = 'json_id'
-        self.request_delay = 2.5
         self.done_count = 0
 
         self.loop = asyncio.get_event_loop()
@@ -78,15 +77,17 @@ class BaseCrawler(object):
         :return:
         """
         for start_url_item in self.start_url_items:
-            url_item = {
-                'url': '',
-                'headers': dict(),
-                'cookies': dict(),
-                'post_data': dict(),
-                'method': 'get'
-            }
-            url_item.update(start_url_item)
-            self.queue.put(copy.deepcopy(url_item))
+            # url_item = {
+            #     'url': '',
+            #     'headers': dict(),
+            #     'cookies': dict(),
+            #     'post_data': dict(),
+            #     'method': 'get'
+            # }
+            # url_item.update(start_url_item)
+            # url_item = copy.deepcopy(url_item)
+            start_url_item['callback'] = self.parse
+            self.queue.put(start_url_item)
 
     def crawler(self):
         """
@@ -101,13 +102,19 @@ class BaseCrawler(object):
         # client = MongoClient(config.mongo_host, config.mongo_port)
         # db = client.meituan
 
-        while not self.queue.is_empty():
+        while True:
+            empty_times = 0
+            while self.queue.is_empty():
+                empty_times+=1
+                if empty_times > 5:
+                    self.logger.info(
+                        "\n\n==============================END======================\n\n")
+                    return
+                time.sleep(1)
+            print('queue is empty')
             asyncio.run_coroutine_threadsafe(self.spider(), loop=self.loop)
-            time.sleep(self.request_delay)
+            time.sleep(config.REQUEST_DELAY)
 
-        self.logger.info(
-            "\n\n==============================END======================\n\n")
-        time.sleep(100)
 
     async def spider(self):
         """
@@ -117,16 +124,35 @@ class BaseCrawler(object):
         self.logger.debug('spider')
 
         url_item = self.queue.get()
+        if 'callback' not in url_item.keys():
+            raise 'You must give callback.'
+        url_item = self.init_url_item(url_item)
+
         resp = await self.downloader.download(url_item)
         if not resp:
             return
 
         # # Complete spider rule
-        await self.parse(resp)
+        # await self.parse(resp)
+        callback = url_item['callback']
+        print(callback)
+        await callback(resp)
         # # end spider
 
         self.done_count += 1
         self.logger.info('已经下载完成%s个页面', self.done_count)
+
+    def init_url_item(self, url_item):
+        keys = url_item.keys()
+        if 'cookies' not in keys:
+            url_item['cookies'] = dict()
+        if 'headers' not in keys:
+            url_item['headers'] = dict()
+        if 'post_data' not in keys:
+            url_item['post_data'] = dict()
+        if 'method' not in keys:
+            url_item['method'] = 'get'
+        return url_item
 
     def parse(self, response):
         """

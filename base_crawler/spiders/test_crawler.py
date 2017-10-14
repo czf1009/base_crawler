@@ -20,21 +20,31 @@ class TestCrawler(BaseCrawler):
         #         'Hm_lvt_d8276dcc8bdfef6bb9d5bc9e3bcfcaf4': '1507876494'
         #     }
         # }
+        # {'url': 'https://www.baidu.com/'}
         {'url': 'http://www.xxmumu.com/artkt/CGshuinendeshaonv24P/'}
     ]
 
     async def parse(self, response):
         page = await response.text()
 
-        total_page = re.findall(u'尾(.*)页', page)[0]
-        print(total_page)
+        total_page = int(re.findall(u'尾(.*)页', page)[0])
+        for i in range(2, total_page+1):
+            url = '{}index{}.html'.format(response.url, i)
+            url_item = {'url': url,'callback':self.next}
+            self.queue.put(url_item)
 
         img_urls = re.findall('<img src=[^>]*>', page)
         with open('pic.html', 'w') as f:
             for img_url in img_urls:
                 f.write(img_url + '\n')
 
-        self.logger.info('done')
+    
+    async def next(self, response):
+        page = await response.text()
+        img_urls = re.findall('<img src=[^>]*>', page)
+        with open('pic.html', 'a') as f:
+            for img_url in img_urls:
+                f.write(img_url + '\n')
 
 
 def main():

@@ -35,11 +35,12 @@ class Downloader(object):
         """
         fetch page headers and body
         """
-        cookie_str = ''
-        for i, j in url_item['cookies'].items():
-            cookie_str += '%s=%s;' % (i, j)
-        url_item['headers']['cookie'] = cookie_str
-        url_item['headers']['user-agent'] = random.choice(agents)
+        if 'cookies' in url_item.keys():
+            cookie_str = ''
+            for i, j in url_item['cookies'].items():
+                cookie_str += '%s=%s;' % (i, j)
+            url_item['headers']['cookie'] = cookie_str
+            url_item['headers']['user-agent'] = random.choice(agents)
 
         if config.use_proxy:
             proxy = config.proxies['http']
