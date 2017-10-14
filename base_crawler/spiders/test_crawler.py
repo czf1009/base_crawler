@@ -21,7 +21,8 @@ class TestCrawler(BaseCrawler):
         #     }
         # }
         # {'url': 'https://www.baidu.com/'}
-        {'url': 'http://www.xxmumu.com/artkt/CGshuinendeshaonv24P/'}
+        # {'url': 'http://www.xxmumu.com/artkt/qulingshisishibazaihui89Phanhejixiazai/'}
+        {'url': 'http://www.xxmumu.com/artkt/yuanzuoharrysongaibianalexshiftqizidefengxian8fanwai123P/'}
     ]
 
     async def parse(self, response):
@@ -33,18 +34,38 @@ class TestCrawler(BaseCrawler):
             url_item = {'url': url,'callback':self.next}
             self.queue.put(url_item)
 
-        img_urls = re.findall('<img src=[^>]*>', page)
-        with open('pic.html', 'w') as f:
-            for img_url in img_urls:
-                f.write(img_url + '\n')
+        # img_urls = re.findall('<img src=[^>]*>', page)
+        # with open('pic.html', 'w') as f:
+        #     for img_url in img_urls:
+        #         f.write(img_url + '\n')
+        img_urls = re.findall('http://[^"]*jpg', page)
+        for i in img_urls:
+            url_item = {
+                'url': i,
+                'callback': self.down_img
+            }
+            self.queue.put(url_item)
 
-    
     async def next(self, response):
         page = await response.text()
-        img_urls = re.findall('<img src=[^>]*>', page)
-        with open('pic.html', 'a') as f:
-            for img_url in img_urls:
-                f.write(img_url + '\n')
+        # img_urls = re.findall('<img src=[^>]*>', page)
+        img_urls = re.findall('http://[^"]*jpg', page)
+        # with open('pic.html', 'a') as f:
+        #     for img_url in img_urls:
+        #         f.write(img_url + '\n')
+        for i in img_urls:
+            url_item = {
+                'url': i,
+                'callback': self.down_img
+            }
+            self.queue.put(url_item)
+
+    async def down_img(self, response):
+        url = str(response.url)
+        print('start downloading page {}'.format(response.url))
+        with open(url.split('/')[-1], 'wb') as f:
+            f.write(response.read())
+        print('page {} down'.format(response.url))
 
 
 def main():

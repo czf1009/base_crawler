@@ -106,7 +106,7 @@ class BaseCrawler(object):
             empty_times = 0
             while self.queue.is_empty():
                 empty_times+=1
-                if empty_times > 5:
+                if empty_times > 10:
                     self.logger.info(
                         "\n\n==============================END======================\n\n")
                     return
