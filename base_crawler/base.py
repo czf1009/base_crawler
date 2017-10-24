@@ -1,4 +1,3 @@
-import copy
 import logging
 import threading
 import time
@@ -103,27 +102,27 @@ class BaseCrawler(object):
         # db = client.meituan
 
         while True:
-            empty_times = 0
-            while self.queue.is_empty():
-                empty_times+=1
-                if empty_times > 10:
+            if self.queue.is_empty():
+                print('queue is empty')
+                print(asyncio.Task.all_tasks())
+                print(len(asyncio.Task.all_tasks()))
+                if len(asyncio.Task.all_tasks()) == 0:
                     self.logger.info(
                         "\n\n==============================END======================\n\n")
                     return
                 time.sleep(1)
-            print('queue is empty')
-            asyncio.run_coroutine_threadsafe(self.spider(), loop=self.loop)
+            url_item = self.queue.get()
+            asyncio.run_coroutine_threadsafe(self.spider(url_item), loop=self.loop)
             time.sleep(config.REQUEST_DELAY)
 
 
-    async def spider(self):
+    async def spider(self, url_item):
         """
         Fetch page and save to local path
         :return:
         """
         self.logger.debug('spider')
 
-        url_item = self.queue.get()
         if 'callback' not in url_item.keys():
             raise 'You must give callback.'
         url_item = self.init_url_item(url_item)

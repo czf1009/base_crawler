@@ -1,12 +1,12 @@
 import re
 
-from lxml import etree
-
 from base_crawler.base import BaseCrawler
 
 
 class TestCrawler(BaseCrawler):
-
+    """
+    TestCrawler
+    """
     start_url_items = [
         # {
         #     'url': 'http://image.suning.cn/uimg/sop/richtext/189429929924297384356060.gif',
@@ -34,31 +34,18 @@ class TestCrawler(BaseCrawler):
             url_item = {'url': url,'callback':self.next}
             self.queue.put(url_item)
 
-        # img_urls = re.findall('<img src=[^>]*>', page)
-        # with open('pic.html', 'w') as f:
-        #     for img_url in img_urls:
-        #         f.write(img_url + '\n')
         img_urls = re.findall('http://[^"]*jpg', page)
-        for i in img_urls:
-            url_item = {
-                'url': i,
-                'callback': self.down_img
-            }
-            self.queue.put(url_item)
+        with open('index1.html', 'w') as f:
+            for img_url in img_urls:
+                f.write('<img src="{}"/>\n'.format(img_url))
 
     async def next(self, response):
         page = await response.text()
-        # img_urls = re.findall('<img src=[^>]*>', page)
+        file_name = str(response.url).split('/')[-1]
         img_urls = re.findall('http://[^"]*jpg', page)
-        # with open('pic.html', 'a') as f:
-        #     for img_url in img_urls:
-        #         f.write(img_url + '\n')
-        for i in img_urls:
-            url_item = {
-                'url': i,
-                'callback': self.down_img
-            }
-            self.queue.put(url_item)
+        with open(file_name, 'w') as f:
+            for img_url in img_urls:
+                f.write('<img src="{}"/>\n'.format(img_url))
 
     async def down_img(self, response):
         url = str(response.url)

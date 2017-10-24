@@ -3,7 +3,7 @@ import aiohttp
 RETRY_HTTP_CODES = []
 
 RETRY_TIMES = 20
-REQUEST_DELAY = 0.2
+REQUEST_DELAY = 0.5
 
 # mysql
 # docker数据库
@@ -17,8 +17,8 @@ mongo_host = '127.0.0.1'
 mongo_port = 27017
 
 # 代理配置
-use_proxy = False
-proxyHost = "proxy.abuyun.com"
+use_proxy = True
+proxyHost = "http-dyn.abuyun.com"
 proxyPort = "9020"
 proxyUser = 'HQ8N7BXWV799DRJD'
 proxyPass = "123723582510D114"

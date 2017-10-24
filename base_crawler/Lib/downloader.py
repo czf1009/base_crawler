@@ -1,4 +1,3 @@
-
 #  @Author: Zephyr_chen
 #  @Date: 2017-10-13 16:05:34
 #  @Last Modified by: mikey.zhaopeng
@@ -25,11 +24,8 @@ class Downloader(object):
 
     def __init__(self, queue):
         self.queue = queue
-        # self.session = requests.Session()  # 创建一个会话接口
-        # requests.adapters.DEFAULT_RETRIES = 5
-        # self.session.keep_alive = False  # 访问完后关闭会话
         self.dir_name = 'json'
-        self.session = aiohttp.ClientSession(conn_timeout=5)
+        self.session = aiohttp.ClientSession(read_timeout=5, conn_timeout=5)
 
     async def fetch_page(self, url_item):
         """
@@ -68,7 +64,8 @@ class Downloader(object):
         """
         resp = await self.fetch_page(url_item)
         logger.info("\n正在爬取页面: %s\npost_data: %s\ncookies:%s\nheaders:%s\n状态码：%s",
-                    url_item['url'], url_item['post_data'], url_item['cookies'], url_item['headers'], resp.status)
+                    url_item['url'], url_item['post_data'], url_item['cookies'],
+                    url_item['headers'], resp.status)
 
         if resp.status != 200:
             self.retry(url_item)
@@ -77,12 +74,15 @@ class Downloader(object):
         return resp
 
     def retry(self, url_item):
-        
+        """
+        retry download
+        """
         if 'retry_times' in url_item:
             if url_item['retry_times'] <= config.RETRY_TIMES:
                 url_item['retry_times'] += 1
             else:
-                logger.debug('重试超过%d次,页面: %s\npost_data: %s\ncookies:%s', config.RETRY_TIMES, url_item['url'],
+                logger.debug('重试超过%d次,页面: %s\npost_data: %s\ncookies:%s',
+                             config.RETRY_TIMES, url_item['url'],
                              url_item['post_data'], url_item['cookies'])
                 return False
         else:
