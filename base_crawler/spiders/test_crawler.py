@@ -1,5 +1,5 @@
 import re
-
+import os
 from base_crawler.base import BaseCrawler
 
 
@@ -23,9 +23,13 @@ class TestCrawler(BaseCrawler):
         # {'url': 'https://www.baidu.com/'}
         # {'url': 'http://www.xxmumu.com/artkt/qulingshisishibazaihui89Phanhejixiazai/'}
         {'url': 'http://www.xxmumu.com/artkt/yuanzuoharrysongaibianalexshiftqizidefengxian8fanwai123P/'}
+        # {'url': 'http://p124.sezuzu.com/2017/08/12/0318_Sacrifice_8_001.jpg'}
     ]
 
     async def parse(self, response):
+        if not os.path.exists('imgs'):
+            os.mkdir('imgs')
+            
         page = await response.text()
 
         total_page = int(re.findall(u'尾(.*)页', page)[0])
@@ -35,23 +39,29 @@ class TestCrawler(BaseCrawler):
             self.queue.put(url_item)
 
         img_urls = re.findall('http://[^"]*jpg', page)
-        with open('index1.html', 'w') as f:
-            for img_url in img_urls:
-                f.write('<img src="{}"/>\n'.format(img_url))
+        for img_url in img_urls:
+            url_item = {'url': img_url,'callback':self.down_img}
+            self.queue.put(url_item)
+        # with open('index1.html', 'w') as f:
+        #     for img_url in img_urls:
+        #         f.write('<img src="{}"/>\n'.format(img_url))
 
     async def next(self, response):
         page = await response.text()
         file_name = str(response.url).split('/')[-1]
         img_urls = re.findall('http://[^"]*jpg', page)
-        with open(file_name, 'w') as f:
-            for img_url in img_urls:
-                f.write('<img src="{}"/>\n'.format(img_url))
+        for img_url in img_urls:
+            url_item = {'url': img_url,'callback':self.down_img}
+            self.queue.put(url_item)
+        # with open(file_name, 'w') as f:
+        #     for img_url in img_urls:
+        #         f.write('<img src="{}"/>\n'.format(img_url))
 
     async def down_img(self, response):
         url = str(response.url)
         print('start downloading page {}'.format(response.url))
-        with open(url.split('/')[-1], 'wb') as f:
-            f.write(response.read())
+        with open('imgs/'+url.split('/')[-1], 'wb') as f:
+            f.write(await response.read())
         print('page {} down'.format(response.url))
 
 

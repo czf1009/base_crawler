@@ -1,6 +1,7 @@
 import aiohttp
 
 RETRY_HTTP_CODES = []
+ALLOWED_HTTP_CODES = []
 
 RETRY_TIMES = 20
 REQUEST_DELAY = 0.5

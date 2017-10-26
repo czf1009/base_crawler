@@ -25,7 +25,14 @@ class Downloader(object):
     def __init__(self, queue):
         self.queue = queue
         self.dir_name = 'json'
-        self.session = aiohttp.ClientSession(read_timeout=5, conn_timeout=5)
+        self.ALLOWED_HTTP_CODES = [200] + config.ALLOWED_HTTP_CODES
+        if config.use_proxy:
+            # proxy = config.proxy
+            # proxy_auth = config.proxy_auth
+            self.proxy = config.proxies['http']
+        else:
+            self.proxy = None
+
 
     async def fetch_page(self, url_item):
         """
@@ -38,23 +45,22 @@ class Downloader(object):
             url_item['headers']['cookie'] = cookie_str
             url_item['headers']['user-agent'] = random.choice(agents)
 
-        if config.use_proxy:
-            proxy = config.proxies['http']
-        else:
-            proxy = None
-
         if url_item['method'] == 'get':
-            async with self.session.get(
-                    url_item['url'], headers=url_item['headers'],
-                    data=json.dumps(url_item['post_data']), proxy=proxy) as response:
-                await response.read()
-                return response
+            async with aiohttp.ClientSession(conn_timeout=5) as session:
+                async with session.get(
+                        url_item['url'], headers=url_item['headers'],
+                        data=json.dumps(url_item['post_data']), proxy=self.proxy) as response:
+                    if response.status in self.ALLOWED_HTTP_CODES:
+                        await response.read()
+                    return response
         elif url_item['method'] == 'post':
-            async with self.session.post(
-                    url_item['url'], headers=url_item['headers'],
-                    data=json.dumps(url_item['post_data']), proxy=proxy) as response:
-                await response.read()
-                return response
+            async with aiohttp.ClientSession(conn_timeout=5) as session:
+                async with session.post(
+                        url_item['url'], headers=url_item['headers'],
+                        data=json.dumps(url_item['post_data']), proxy=self.proxy) as response:
+                    if response.status in self.ALLOWED_HTTP_CODES:
+                        await response.read()
+                    return response
         else:
             raise'method:{} is invalid!'.format(url_item['method'])
 
@@ -63,13 +69,16 @@ class Downloader(object):
         return response
         """
         resp = await self.fetch_page(url_item)
-        logger.info("\n正在爬取页面: %s\npost_data: %s\ncookies:%s\nheaders:%s\n状态码：%s",
-                    url_item['url'], url_item['post_data'], url_item['cookies'],
-                    url_item['headers'], resp.status)
+        # logger.info("\n正在爬取页面: %s\npost_data: %s\ncookies:%s\nheaders:%s\n状态码：%s",
+        #             url_item['url'], url_item['post_data'], url_item['cookies'],
+        #             url_item['headers'], resp.status)
 
-        if resp.status != 200:
+        if resp.status not in self.ALLOWED_HTTP_CODES:
+            logger.info("\033[1;31m正在爬取页面: %s  状态码：%s\033[0m", url_item['url'], resp.status)
             self.retry(url_item)
             return False
+
+        logger.info("\033[1;32m正在爬取页面: %s  状态码：%s\033[0m", url_item['url'], resp.status)
 
         return resp
 
@@ -91,5 +100,5 @@ class Downloader(object):
         return True
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.session.close()
         # self.loop.close()
+        pass

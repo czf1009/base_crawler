@@ -103,9 +103,9 @@ class BaseCrawler(object):
 
         while True:
             if self.queue.is_empty():
-                print('queue is empty')
-                print(asyncio.Task.all_tasks())
-                print(len(asyncio.Task.all_tasks()))
+                # print('queue is empty')
+                # print(asyncio.Task.all_tasks())
+                # print(len(asyncio.Task.all_tasks()))
                 if len(asyncio.Task.all_tasks()) == 0:
                     self.logger.info(
                         "\n\n==============================END======================\n\n")
@@ -121,7 +121,7 @@ class BaseCrawler(object):
         Fetch page and save to local path
         :return:
         """
-        self.logger.debug('spider')
+        # self.logger.debug('spider')
 
         if 'callback' not in url_item.keys():
             raise 'You must give callback.'
@@ -134,7 +134,7 @@ class BaseCrawler(object):
         # # Complete spider rule
         # await self.parse(resp)
         callback = url_item['callback']
-        print(callback)
+        # print(callback)
         await callback(resp)
         # # end spider
 
