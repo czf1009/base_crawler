@@ -69,6 +69,11 @@ class BaseCrawler(object):
         download_thread.setDaemon(True)  # 设置为守护线程
         download_thread.start()
 
+    def callback(self, future):
+        if future.exception():
+            print("Exception: %s" % future.exception())
+        print("\033[1;32mCallback: %s\033[0m" % future.result())
+
     # **********************************download_page
     def put_start_url_item(self):
         """
@@ -104,17 +109,29 @@ class BaseCrawler(object):
         while True:
             if self.queue.is_empty():
                 # print('queue is empty')
-                # print(asyncio.Task.all_tasks())
-                # print(len(asyncio.Task.all_tasks()))
-                if len(asyncio.Task.all_tasks()) == 0:
+                # if len(asyncio.Task.all_tasks()) == 0:
+                #     self.download_thread.is_dead()
+                #     self.logger.info(
+                #         "\n\n==============================END======================\n\n")
+                #     return
+                is_done = True
+                for task in asyncio.Task.all_tasks():
+                    # print('task: %s' % task)
+                    if not task.done():
+                        print('Task running')
+                        # print('task: %s' % task)
+                        is_done = False
+                        break
+                if is_done:
                     self.logger.info(
                         "\n\n==============================END======================\n\n")
                     return
-                time.sleep(1)
-            url_item = self.queue.get()
-            asyncio.run_coroutine_threadsafe(self.spider(url_item), loop=self.loop)
-            time.sleep(config.REQUEST_DELAY)
-
+                time.sleep(2)
+            else:
+                url_item = self.queue.get()
+                # print('url_item: %s' % url_item)
+                asyncio.run_coroutine_threadsafe(self.spider(url_item), loop=self.loop).add_done_callback(self.callback)
+                time.sleep(config.REQUEST_DELAY)
 
     async def spider(self, url_item):
         """

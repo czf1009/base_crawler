@@ -42,9 +42,10 @@ class TestCrawler(BaseCrawler):
         for img_url in img_urls:
             url_item = {'url': img_url,'callback':self.down_img}
             self.queue.put(url_item)
-        # with open('index1.html', 'w') as f:
-        #     for img_url in img_urls:
-        #         f.write('<img src="{}"/>\n'.format(img_url))
+        with open('index1.html', 'w') as f:
+            for img_url in img_urls:
+                img_path = 'imgs/'+img_url.split('/')[-1]
+                f.write('<img src="{}"/>\n'.format(img_path))
 
     async def next(self, response):
         page = await response.text()
@@ -53,16 +54,17 @@ class TestCrawler(BaseCrawler):
         for img_url in img_urls:
             url_item = {'url': img_url,'callback':self.down_img}
             self.queue.put(url_item)
-        # with open(file_name, 'w') as f:
-        #     for img_url in img_urls:
-        #         f.write('<img src="{}"/>\n'.format(img_url))
+        with open(file_name, 'w') as f:
+            for img_url in img_urls:
+                img_path = 'imgs/'+img_url.split('/')[-1]
+                f.write('<img src="{}"/>\n'.format(img_path))
 
     async def down_img(self, response):
         url = str(response.url)
-        print('start downloading page {}'.format(response.url))
+        # print('start downloading page {}'.format(response.url))
         with open('imgs/'+url.split('/')[-1], 'wb') as f:
             f.write(await response.read())
-        print('page {} down'.format(response.url))
+        # print('page {} down'.format(response.url))
 
 
 def main():
