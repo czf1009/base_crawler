@@ -3,6 +3,7 @@ import os
 import re
 
 def merge_page():
+    print('start merge page')
     files = {}
     for file in os.listdir():
         if 'index' in file:
@@ -13,6 +14,7 @@ def merge_page():
             with open(files[index], 'r') as file:
                 page.write(file.read())
             os.remove(files[index])
+    print('\033[1;32mmerge page complete\033[0m')
             
 
 try:

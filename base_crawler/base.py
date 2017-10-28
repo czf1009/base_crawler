@@ -1,6 +1,7 @@
 import logging
 import threading
 import time
+import functools
 
 import asyncio
 
@@ -69,10 +70,11 @@ class BaseCrawler(object):
         download_thread.setDaemon(True)  # 设置为守护线程
         download_thread.start()
 
-    def callback(self, future):
+    def callback(self, url, future):
         if future.exception():
-            print("Exception: %s" % future.exception())
-        print("\033[1;32mCallback: %s\033[0m" % future.result())
+            self.logger.error("\n\033[1;31mException: %s\nurl: %s\033[0m" % (future.exception(), url))
+            # print(type(future.exception()))
+        self.logger.info("\033[1;32mfuture.result: %s\033[0m" % future.result())
 
     # **********************************download_page
     def put_start_url_item(self):
@@ -130,7 +132,7 @@ class BaseCrawler(object):
             else:
                 url_item = self.queue.get()
                 # print('url_item: %s' % url_item)
-                asyncio.run_coroutine_threadsafe(self.spider(url_item), loop=self.loop).add_done_callback(self.callback)
+                asyncio.run_coroutine_threadsafe(self.spider(url_item), loop=self.loop).add_done_callback(functools.partial(self.callback, url_item['url']))
                 time.sleep(config.REQUEST_DELAY)
 
     async def spider(self, url_item):
