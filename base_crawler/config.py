@@ -4,7 +4,7 @@ RETRY_HTTP_CODES = []
 ALLOWED_HTTP_CODES = []
 
 RETRY_TIMES = 4
-REQUEST_DELAY = 0.5
+REQUEST_DELAY = 0.25
 
 # mysql
 # docker数据库

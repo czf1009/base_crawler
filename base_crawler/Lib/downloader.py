@@ -68,13 +68,21 @@ class Downloader(object):
         """
         return response
         """
-        resp = await self.fetch_page(url_item)
+        try:
+            resp = await self.fetch_page(url_item)
+        except aiohttp.client_exceptions.ServerTimeoutError:
+            logger.info("\033[1;31m正在爬取页面: %s  ServerTimeoutError.", url_item['url'])
+            self.retry(url_item)
+            return False
         # logger.info("\n正在爬取页面: %s\npost_data: %s\ncookies:%s\nheaders:%s\n状态码：%s",
         #             url_item['url'], url_item['post_data'], url_item['cookies'],
         #             url_item['headers'], resp.status)
 
         if resp.status not in self.ALLOWED_HTTP_CODES:
             logger.info("\033[1;31m正在爬取页面: %s  状态码：%s\033[0m", url_item['url'], resp.status)
+            if resp.status == 404:
+                logger.info("\033[1;31m页面: %s不存在,丢弃页面。  状态码：%s\033[0m", url_item['url'], resp.status)
+                return False
             self.retry(url_item)
             return False
 

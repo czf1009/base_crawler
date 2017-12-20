@@ -127,6 +127,7 @@ class BaseCrawler(object):
                 if is_done:
                     self.logger.info(
                         "\n\n==============================END======================\n\n")
+                    self.end()
                     return
                 time.sleep(2)
             else:
@@ -177,3 +178,9 @@ class BaseCrawler(object):
         parse response
         """
         raise NotImplementedError
+
+    def end(self):
+        """
+        do when crawler end
+        """
+        pass
