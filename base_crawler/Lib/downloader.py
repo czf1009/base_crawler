@@ -12,6 +12,7 @@ import aiohttp
 
 from base_crawler import config
 from base_crawler.Lib.user_agents import agents
+from aiohttp.client_exceptions import ServerTimeoutError, ServerDisconnectedError
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('downloader')
@@ -70,8 +71,8 @@ class Downloader(object):
         """
         try:
             resp = await self.fetch_page(url_item)
-        except aiohttp.client_exceptions.ServerTimeoutError:
-            logger.info("\033[1;31m正在爬取页面: %s  ServerTimeoutError.", url_item['url'])
+        except (ServerTimeoutError, ServerDisconnectedError) as e:
+            logger.info("\033[1;31m正在爬取页面: %s  Error:%s", (url_item['url'], e))
             self.retry(url_item)
             return False
         # logger.info("\n正在爬取页面: %s\npost_data: %s\ncookies:%s\nheaders:%s\n状态码：%s",
